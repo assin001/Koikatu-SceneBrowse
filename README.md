@@ -4,6 +4,8 @@
 
 Koikatsu（CharaStudio）场景卡浏览器：用自绘的卡片网格替换「设置 → 读取数据 → 场景卡」原生面板，支持递归扫描、作者目录树、搜索、排序筛选、收藏与自定义分类。扁平深色圆角风格。
 
+> **通用版本**：同一份 `KK_SceneBrowser.dll` 同时支持 Koikatsu 与 Koikatsu Sunshine（KKS），**不需要区分版本**。两者都是 `CharaStudio.exe`，PNG 解码与界面绘制均已做双引擎兼容（KK 走 `Texture2D.LoadImage`，KKS 自动切到 `ImageConversion.LoadImage`）。
+
 ## 界面
 
 - 顶部：`SD卡管理器` 标题、当前路径、索引状态、关闭按钮
@@ -61,7 +63,7 @@ Koikatsu（CharaStudio）场景卡浏览器：用自绘的卡片网格替换「�
 2. 启动 `CharaStudio.exe`，打开「设置 → 读取数据 → 场景卡」
 3. 生效确认：`BepInEx\LogOutput.log` 中出现 `KK Scene Browser` 加载信息
 
-只在 `CharaStudio.exe` 内加载，需要 BepInEx 5.4.x（x64）。
+只在 `CharaStudio.exe` 内加载，需要 BepInEx 5.4.x（x64）。KK 与 KKS 装同一份 DLL 即可，无需按版本分别编译或替换。
 
 ## 快捷键
 
