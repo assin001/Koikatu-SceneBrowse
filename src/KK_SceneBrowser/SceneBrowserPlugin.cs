@@ -1035,7 +1035,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			{
 				return true;
 			}
-			if ((Object)(object)instance._rootGo == (Object)null || !instance._rootGo.activeInHierarchy)
+			if ((Object)(object)_panel == (Object)null)
 			{
 				return true;
 			}
