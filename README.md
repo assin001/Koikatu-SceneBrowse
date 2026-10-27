@@ -15,6 +15,14 @@ Koikatsu（CharaStudio）场景卡浏览器：用自绘的卡片网格替换「�
 - 底栏：批量按钮（全选 / 本页全选 / 取消 / 收藏 / 取消收藏 / 删除）
 - 弹层：排序下拉、卡片菜单、收藏夹面板、输入框、确认框
 
+<p align="center">
+  <img src="docs/images/ui-grid.png" width="880" alt="卡片网格">
+</p>
+
+<p align="center">
+  <img src="docs/images/ui-card-menu.png" width="880" alt="单击卡片菜单">
+</p>
+
 ## 功能
 
 **扫描与列表**
