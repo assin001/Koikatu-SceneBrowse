@@ -1,0 +1,16 @@
+# build output
+out/
+
+# local binaries / decompiled game code
+*.dll
+*.pdb
+*.bak_*
+_tools/
+_decompiled/
+
+# editor / os
+.vs/
+.idea/
+*.user
+Thumbs.db
+desktop.ini
