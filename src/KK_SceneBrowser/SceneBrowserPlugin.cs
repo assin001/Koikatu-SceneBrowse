@@ -4200,7 +4200,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		NewCard("FilterBar", (Transform)(object)val3, GridRight - GridLeft, 96f, (GridLeft + GridRight) / 2f, 370f, ColSurface, RCard, false);
 		float num2 = num - 146f;
 		float y = (_chipY = num - 96f);
-		_countLabel = NewLabel((Transform)(object)val3, "", 96f, 20f, 700f, num2, 12, ColSub, (TextAnchor)5);
+		_countLabel = NewLabel((Transform)(object)val3, "", 96f, 20f, 679f, num2, 12, ColSub, (TextAnchor)5);
 		((Object)_countLabel).name = "CountLabel";
 		_sliderW = 200f;
 		float trackLeft = 251f;
@@ -4332,9 +4332,9 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	private void BuildSearchBox(Transform panel)
 	{
-		float num = 140f;
+		float num = 130f;
 		float num2 = 32f;
-		float x = 562f;
+		float x = 558f;
 		float y = 344f;
 		RectTransform val = (_searchBox = NewRound("SearchBox", panel, num, num2, x, y, ColBorder, RItem, true));
 		_searchGo = ((Component)val).gameObject;
