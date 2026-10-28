@@ -425,6 +425,12 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	private GameObject _searchGo;
 
+	private bool _searchByAuthor;
+
+	private Button _searchModeBtn;
+
+	private Text _searchPlaceholder;
+
 	private string _lastAuthor;
 
 	private string _lastSub;
@@ -1725,11 +1731,25 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	private static bool HasText(string s, string q)
 	{
-		if (string.IsNullOrEmpty(s))
+		if (string.IsNullOrEmpty(s) || string.IsNullOrEmpty(q))
 		{
 			return false;
 		}
-		return s.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0;
+		return s.ToLowerInvariant().IndexOf(q.ToLowerInvariant(), StringComparison.Ordinal) >= 0;
+	}
+
+	private bool MatchesSearch(Entry e)
+	{
+		string text = _searchText.Trim();
+		if (text.Length == 0)
+		{
+			return true;
+		}
+		if (_searchByAuthor)
+		{
+			return HasText(e.Author, text) || HasText(e.Dir, text) || HasText(e.Sub, text);
+		}
+		return HasText(e.Name, text);
 	}
 
 	private long TotalSize()
@@ -3277,7 +3297,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 					continue;
 				}
 			}
-			if (_searchText.Length <= 0 || HasText(entry.Name, _searchText) || HasText(entry.Author, _searchText) || HasText(entry.Dir, _searchText) || HasText(entry.Sub, _searchText))
+			if (_searchText.Length <= 0 || MatchesSearch(entry))
 			{
 				list2.Add(entry);
 			}
@@ -4329,20 +4349,21 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	private void BuildSearchBox(Transform panel)
 	{
-		float num = 130f;
+		float num = 108f;
 		float num2 = 32f;
-		float x = 558f;
+		float x = 569f;
 		float y = 344f;
 		RectTransform val = (_searchBox = NewRound("SearchBox", panel, num, num2, x, y, ColBorder, RItem, true));
 		_searchGo = ((Component)val).gameObject;
 		RectTransform val2 = NewRound("SearchFill", (Transform)(object)val, num - 2f, num2 - 2f, 0f, 0f, UiTheme.Field, RItem - 1, false);
 		((Transform)val2).SetAsFirstSibling();
-		Text titleLbl = NewLabel((Transform)(object)val, "搜索", 28f, 20f, (0f - num) / 2f - 16f, 0f, 11, ColDim, (TextAnchor)5);
-		((Object)titleLbl).name = "SearchTitle";
-		((Graphic)titleLbl).raycastTarget = true;
-		Button titleBtn = ((Component)titleLbl).gameObject.AddComponent<Button>();
-		((Selectable)titleBtn).transition = (Selectable.Transition)0;
-		((UnityEvent)titleBtn.onClick).AddListener(new UnityAction(FocusSearchField));
+		_searchModeBtn = NewButton((Transform)(object)val, "卡名", 52f, 24f, (0f - num) / 2f - 34f, 0f, new UnityAction(OnToggleSearchMode));
+		((Object)_searchModeBtn).name = "Btn_SearchMode";
+		Text modeLbl = ButtonLabel(_searchModeBtn);
+		if ((Object)(object)modeLbl != (Object)null)
+		{
+			modeLbl.fontSize = 11;
+		}
 		float num3 = num - 24f;
 		RectTransform val3 = NewRect("FieldArea", (Transform)(object)val, num - 2f, num2 - 2f, 0f, 0f, new Color(0f, 0f, 0f, 0f), raycast: true);
 		((Component)val3).gameObject.AddComponent<RectMask2D>();
@@ -4351,17 +4372,43 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		val4.supportRichText = true;
 		val4.horizontalOverflow = (HorizontalWrapMode)1;
 		val4.verticalOverflow = (VerticalWrapMode)0;
-		Text val5 = NewLabel((Transform)(object)val3, "卡名 / 作者", num3, 22f, 0f, 0f, 12, ColDim, (TextAnchor)3);
-		((Object)val5).name = "Placeholder";
+		_searchPlaceholder = NewLabel((Transform)(object)val3, "卡名", num3, 22f, 0f, 0f, 12, ColDim, (TextAnchor)3);
+		((Object)_searchPlaceholder).name = "Placeholder";
 		_searchField = ((Component)val3).gameObject.AddComponent<InputField>();
 		_searchField.textComponent = val4;
-		_searchField.placeholder = (Graphic)(object)val5;
+		_searchField.placeholder = (Graphic)(object)_searchPlaceholder;
 		((Selectable)_searchField).targetGraphic = (Graphic)(object)((Component)val3).GetComponent<Image>();
 		_searchField.lineType = InputField.LineType.SingleLine;
 		_searchField.characterLimit = 64;
 		_searchField.text = _searchText;
 		((UnityEvent<string>)(object)_searchField.onValueChanged).AddListener((UnityAction<string>)OnSearchChanged);
 		((UnityEvent<string>)(object)_searchField.onEndEdit).AddListener((UnityAction<string>)OnSearchEndEdit);
+		UpdateSearchModeUi();
+	}
+
+	private void OnToggleSearchMode()
+	{
+		_searchByAuthor = !_searchByAuthor;
+		UpdateSearchModeUi();
+		RefreshView(keepPos: true);
+		FocusSearchField();
+	}
+
+	private void UpdateSearchModeUi()
+	{
+		if ((Object)(object)_searchModeBtn != (Object)null)
+		{
+			Text text = ButtonLabel(_searchModeBtn);
+			if ((Object)(object)text != (Object)null)
+			{
+				text.text = (_searchByAuthor ? "作者" : "卡名");
+			}
+			PaintButton(_searchModeBtn, _searchByAuthor ? ColAccent : ColField, _searchByAuthor ? Color.white : ColSub);
+		}
+		if ((Object)(object)_searchPlaceholder != (Object)null)
+		{
+			_searchPlaceholder.text = (_searchByAuthor ? "作者名" : "卡名");
+		}
 	}
 
 	private void OnSearchChanged(string v)
