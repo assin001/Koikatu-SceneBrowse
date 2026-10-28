@@ -4284,9 +4284,6 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		AddBatchButton((Transform)(object)val3, "全选", 62f, ref x, num2, new UnityAction(SelectAllInView));
 		AddBatchButton((Transform)(object)val3, "本页全选", 84f, ref x, num2, new UnityAction(SelectAllVisible));
 		AddBatchButton((Transform)(object)val3, "取消", 62f, ref x, num2, new UnityAction(OnClearMulti));
-		AddBatchButton((Transform)(object)val3, "★ 收藏", 82f, ref x, num2, new UnityAction(OnBatchFav));
-		AddBatchButton((Transform)(object)val3, "☆ 取消收藏", 104f, ref x, num2, new UnityAction(OnBatchUnfav));
-		AddBatchButton((Transform)(object)val3, "删除", 62f, ref x, num2, new UnityAction(OnBatchDelete));
 		RectTransform val10 = NewRect("Pager", (Transform)(object)val3, 36f, _viewH, PagerX, y2, new Color(0f, 0f, 0f, 0f), raycast: false);
 		_pageGo = ((Component)val10).gameObject;
 		_pagePrev = NewButton((Transform)(object)val10, "∧\n∧", 26f, 26f, 0f, 0f, new UnityAction(OnPageFirst));
@@ -6031,8 +6028,10 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		val8.anchorMax = new Vector2(1f, 1f);
 		val8.pivot = new Vector2(1f, 1f);
 		val8.anchoredPosition = new Vector2(0f - pad - 2f, 0f - pad - 2f);
-		Text val9 = NewLabel((Transform)(object)val8, "✓", 20f, 20f, 0f, 0f, 13, Color.white, (TextAnchor)4);
-		((Object)val9).name = "Mark";
+		RectTransform markA = NewRound("MarkA", (Transform)(object)val8, 4f, 2f, -2.95f, -0.9f, Color.white, 1, false);
+		markA.localEulerAngles = new Vector3(0f, 0f, -50f);
+		RectTransform markB = NewRound("MarkB", (Transform)(object)val8, 8f, 2f, 1.15f, 0.3f, Color.white, 1, false);
+		markB.localEulerAngles = new Vector3(0f, 0f, 43.5f);
 		((Component)val8).gameObject.SetActive(false);
 		Text val10 = NewLabel((Transform)(object)val, entry.Name, _cellW - pad * 2f - 4f, 20f, 0f, 0f, 13, ColCardText, (TextAnchor)3);
 		((Object)val10).name = "Name";
