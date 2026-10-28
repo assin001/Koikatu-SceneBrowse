@@ -4195,7 +4195,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		NewRound("Shadow", (Transform)(object)_rootRect, PanelW + 22f, 996f, 0f, -8f, new Color(0f, 0f, 0f, 0.45f), RPanel + 6, false);
 		RectTransform val3 = NewCard("Panel", (Transform)(object)_rootRect, PanelW, 980f, 0f, 0f, ColPanel, RPanel, true);
 		float num = 490f;
-		Text val4 = NewLabel((Transform)(object)val3, "SD卡管理器", 300f, 32f, PanelLeft + 172f, num - 26f, 21, ColText, (TextAnchor)3);
+		Text val4 = NewLabel((Transform)(object)val3, "SD卡管理器 <size=13><color=#74869A>v1.1</color></size>", 300f, 32f, PanelLeft + 172f, num - 26f, 21, ColText, (TextAnchor)3);
 		((Object)val4).name = "Title";
 		_pathLabel = NewLabel((Transform)(object)val3, "", PanelW - 242f, 18f, PanelLeft + 22f + (PanelW - 242f) / 2f, num - 52f, 12, ColDim, (TextAnchor)3);
 		((Object)_pathLabel).name = "PathLabel";
@@ -4220,10 +4220,10 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		NewCard("FilterBar", (Transform)(object)val3, GridRight - GridLeft, 96f, (GridLeft + GridRight) / 2f, 370f, ColSurface, RCard, false);
 		float num2 = num - 146f;
 		float y = (_chipY = num - 96f);
-		_countLabel = NewLabel((Transform)(object)val3, "", 96f, 20f, 679f, num2, 12, ColSub, (TextAnchor)5);
+		_countLabel = NewLabel((Transform)(object)val3, "", 88f, 20f, 690f, num2, 12, ColSub, (TextAnchor)5);
 		((Object)_countLabel).name = "CountLabel";
-		_sliderW = 200f;
-		float trackLeft = 251f;
+		_sliderW = 112f;
+		float trackLeft = 339f;
 		_sliderTrack = NewRound("SizeTrack", (Transform)(object)val3, _sliderW, 6f, trackLeft + _sliderW / 2f, num2, ColLine, 2, true);
 		_sliderFill = NewRound("SizeFill", (Transform)(object)_sliderTrack, SliderFillW(_colCount), 6f, 0f, 0f, ColAccent, 2, false);
 		_sliderFill.anchorMin = new Vector2(0f, 0.5f);
@@ -4236,14 +4236,14 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		sliderDrag.Track = _sliderTrack;
 		sliderDrag.Width = _sliderW;
 		sliderDrag.Radius = 8f;
-		NewLabel((Transform)(object)val3, "缩略图", 44f, 20f, 223f, num2, 11, ColDim, (TextAnchor)4);
-		Button val6 = NewButton((Transform)(object)val3, "↓", 38f, 32f, 176f, num2, new UnityAction(OnToggleOrder));
+		NewLabel((Transform)(object)val3, "缩略图", 44f, 20f, 311f, num2, 11, ColDim, (TextAnchor)4);
+		Button val6 = NewButton((Transform)(object)val3, "↓", 38f, 32f, -366f, num2, new UnityAction(OnToggleOrder));
 		((Object)val6).name = "Btn_Order";
 		_orderBtnText = ((Component)((Component)val6).transform.Find("Label")).GetComponent<Text>();
-		_sortBtn = NewButton((Transform)(object)val3, "创建日期 ↓", 112f, 32f, 95f, num2, new UnityAction(OnSortClicked));
+		_sortBtn = NewButton((Transform)(object)val3, "创建日期 ↓", 112f, 32f, -449f, num2, new UnityAction(OnSortClicked));
 		((Object)_sortBtn).name = "Btn_Sort";
 		_sortBtnText = ((Component)((Component)_sortBtn).transform.Find("Label")).GetComponent<Text>();
-		_sortCx = 95f;
+		_sortCx = -449f;
 		_sortY = num2;
 		float num4 = GridLeft + 14f;
 		float[] array = new float[7] { 99f, 138f, 99f, 210f, 210f, 210f, 210f };
@@ -4300,7 +4300,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		_selLabel = NewLabel((Transform)(object)val3, "未选择", 1200f, 22f, (GridLeft + GridRight) / 2f, -432f, 13, ColSub, (TextAnchor)3);
 		((Object)_selLabel).name = "SelLabel";
 		_batchGo.Clear();
-		float x = -501f;
+		float x = -339f;
 		AddBatchButton((Transform)(object)val3, "全选", 62f, ref x, num2, new UnityAction(SelectAllInView));
 		AddBatchButton((Transform)(object)val3, "本页全选", 84f, ref x, num2, new UnityAction(SelectAllVisible));
 		AddBatchButton((Transform)(object)val3, "取消", 62f, ref x, num2, new UnityAction(OnClearMulti));
@@ -4349,15 +4349,16 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	private void BuildSearchBox(Transform panel)
 	{
-		float num = 108f;
+		float num = 92f;
 		float num2 = 32f;
-		float x = 569f;
+		float x = 592f;
 		float y = 344f;
 		RectTransform val = (_searchBox = NewRound("SearchBox", panel, num, num2, x, y, ColBorder, RItem, true));
 		_searchGo = ((Component)val).gameObject;
 		RectTransform val2 = NewRound("SearchFill", (Transform)(object)val, num - 2f, num2 - 2f, 0f, 0f, UiTheme.Field, RItem - 1, false);
 		((Transform)val2).SetAsFirstSibling();
-		_searchModeBtn = NewButton((Transform)(object)val, "卡名", 52f, 24f, (0f - num) / 2f - 34f, 0f, new UnityAction(OnToggleSearchMode));
+		NewLabel(panel, "搜索", 28f, 24f, 475f, y, 12, ColDim, (TextAnchor)5);
+		_searchModeBtn = NewButton(panel, "名字  ▼", 50f, 24f, 518f, y, new UnityAction(OnSearchModeClicked));
 		((Object)_searchModeBtn).name = "Btn_SearchMode";
 		Text modeLbl = ButtonLabel(_searchModeBtn);
 		if ((Object)(object)modeLbl != (Object)null)
@@ -4386,12 +4387,16 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		UpdateSearchModeUi();
 	}
 
-	private void OnToggleSearchMode()
+	private void OnSearchModeClicked()
 	{
-		_searchByAuthor = !_searchByAuthor;
-		UpdateSearchModeUi();
-		RefreshView(keepPos: true);
-		FocusSearchField();
+		if ((Object)(object)_dropGo != (Object)null && _dropOwner == 8)
+		{
+			CloseDrop();
+		}
+		else
+		{
+			ShowDrop(8, 518f, 331f);
+		}
 	}
 
 	private void UpdateSearchModeUi()
@@ -4401,13 +4406,13 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			Text text = ButtonLabel(_searchModeBtn);
 			if ((Object)(object)text != (Object)null)
 			{
-				text.text = (_searchByAuthor ? "作者" : "卡名");
+				text.text = (_searchByAuthor ? "作者  ▼" : "名字  ▼");
 			}
 			PaintButton(_searchModeBtn, _searchByAuthor ? ColAccent : ColField, _searchByAuthor ? Color.white : ColSub);
 		}
 		if ((Object)(object)_searchPlaceholder != (Object)null)
 		{
-			_searchPlaceholder.text = (_searchByAuthor ? "作者名" : "卡名");
+			_searchPlaceholder.text = (_searchByAuthor ? "作者名" : "名字");
 		}
 	}
 
@@ -4434,16 +4439,16 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		return Mathf.Clamp01(((float)cols - 4f) / 6f);
 	}
 
-	private static float KnobX(float trackLeft, int cols)
+	private float KnobX(float trackLeft, int cols)
 	{
 		float num = 8f;
-		return trackLeft + num + 116f * SliderT(cols);
+		return trackLeft + num + (_sliderW - num * 2f) * SliderT(cols);
 	}
 
-	private static float SliderFillW(int cols)
+	private float SliderFillW(int cols)
 	{
 		float num = 8f;
-		return num + 116f * SliderT(cols);
+		return num + (_sliderW - num * 2f) * SliderT(cols);
 	}
 
 	private void BuildSidePanel(Transform panel)
@@ -4655,6 +4660,8 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			}
 			return list.ToArray();
 		}
+		case 8:
+			return new string[2] { "名字", "作者" };
 		default:
 			return null;
 		}
@@ -4726,9 +4733,10 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			5 => _durMode, 
 			6 => _sortMode, 
 			7 => CollFilterIndex(), 
+			8 => (_searchByAuthor ? 1 : 0), 
 			_ => 0, 
 		};
-		float num2 = ((owner == 7) ? 214f : 178f);
+		float num2 = ((owner == 7) ? 214f : ((owner == 8) ? 96f : 178f));
 		float num3 = 10f + 32f * (float)array.Length;
 		float y = topY - num3 / 2f;
 		RectTransform val = NewRound("ChipDrop", (Transform)(object)_rootRect, num2, num3, cxp, y, UiTheme.SurfaceAlt, RCard, true);
@@ -4776,6 +4784,11 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		CloseDrop();
 		switch (dropOwner)
 		{
+		case 8:
+			_searchByAuthor = (idx == 1);
+			UpdateSearchModeUi();
+			RefreshView(keepPos: true);
+			return;
 		case 6:
 			_sortMode = Mathf.Clamp(idx, 0, 5);
 			UpdateSortButtonVisuals();
@@ -4986,6 +4999,14 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		{
 			RectTransform component2 = ((Component)_sortBtn).GetComponent<RectTransform>();
 			if ((Object)(object)component2 != (Object)null && RectTransformUtility.RectangleContainsScreenPoint(component2, mp, (Camera)null))
+			{
+				return true;
+			}
+		}
+		if ((Object)(object)_searchModeBtn != (Object)null)
+		{
+			RectTransform component3 = ((Component)_searchModeBtn).GetComponent<RectTransform>();
+			if ((Object)(object)component3 != (Object)null && RectTransformUtility.RectangleContainsScreenPoint(component3, mp, (Camera)null))
 			{
 				return true;
 			}
