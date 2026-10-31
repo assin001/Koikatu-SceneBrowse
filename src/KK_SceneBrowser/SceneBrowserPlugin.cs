@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -388,6 +388,8 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 	private bool _batchMode;
 
 	private bool _loading;
+
+	private bool _loadSawPanelGone;
 
 	private float _loadStart;
 
@@ -1363,11 +1365,24 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			if (_loading)
 			{
 				AnimateLoading();
+				if ((Object)(object)_rootGo != (Object)null && !_rootGo.activeSelf)
+				{
+					_rootGo.SetActive(true);
+				}
+				if ((Object)(object)_panel == (Object)null)
+				{
+					ScanForPanel();
+				}
 				float loadElapsed = Time.realtimeSinceStartup - _loadStart;
 				bool panelGone = (Object)(object)_panel == (Object)null || (Object)(object)((Component)_panel).gameObject == (Object)null;
-				if (loadElapsed > 30f || (!panelGone && loadElapsed > 2f))
+				if (panelGone)
 				{
-					ShowLoading(false);
+					_loadSawPanelGone = true;
+				}
+				bool flag = _loadSawPanelGone && !panelGone;
+				if (loadElapsed > 30f || (flag && loadElapsed > 0.5f))
+				{
+					FinishLoading();
 				}
 				else if (panelGone)
 				{
@@ -1387,12 +1402,12 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			{
 				CloseOverwriteConfirm();
 			}
-			if ((Object)(object)_panel == (Object)null || (Object)(object)((Component)_panel).gameObject == (Object)null)
+			if (((Object)(object)_panel == (Object)null || (Object)(object)((Component)_panel).gameObject == (Object)null) && !_loading)
 			{
 				HideRoot();
 				return;
 			}
-			if (!IsPanelVisible())
+			if (!IsPanelVisible() && !_loading)
 			{
 				if (_wasVisible)
 				{
@@ -2169,7 +2184,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			SceneBrowserPlugin instance = Instance;
 			if ((Object)(object)instance != (Object)null && instance._loading)
 			{
-				instance.ShowLoading(false);
+				instance.FinishLoading();
 			}
 			if (__result && !string.IsNullOrEmpty(__0))
 			{
@@ -6919,6 +6934,13 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		}
 	}
 
+	/// <summary>加载收尾：关闭读取提示，并把整个面板一起收起。</summary>
+	private void FinishLoading()
+	{
+		ShowLoading(false);
+		HideRoot();
+	}
+
 	private void ShowLoading(bool show)
 	{
 		if (show)
@@ -6928,6 +6950,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 				BuildLoadingOverlay();
 			}
 			_loadStart = Time.realtimeSinceStartup;
+			_loadSawPanelGone = false;
 			_loading = true;
 			if ((Object)(object)_loadGo != (Object)null)
 			{
@@ -6946,11 +6969,12 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	private void BuildLoadingOverlay()
 	{
-		if ((Object)(object)_rootRect == (Object)null)
+		RectTransform parent = EnsureOverlayCanvas();
+		if ((Object)(object)parent == (Object)null)
 		{
 			return;
 		}
-		RectTransform val = NewRect("Loading", (Transform)(object)_rootRect, 10f, 10f, 0f, 0f, new Color(0f, 0f, 0f, 0.55f), raycast: true);
+		RectTransform val = NewRect("Loading", (Transform)(object)parent, 10f, 10f, 0f, 0f, new Color(0f, 0f, 0f, 0.55f), raycast: true);
 		val.anchorMin = Vector2.zero;
 		val.anchorMax = Vector2.one;
 		val.offsetMin = Vector2.zero;
@@ -6984,15 +7008,16 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		{
 			return;
 		}
-		int num3 = (int)(num * 9f) % 8;
+		float num3 = (0f - num) * 240f;
 		for (int i = 0; i < _loadSpin.Length; i++)
 		{
 			if ((Object)(object)_loadSpin[i] == (Object)null)
 			{
 				continue;
 			}
-			int num4 = ((num3 - i) % 8 + 8) % 8;
-			float a = 0.15f + 0.85f * (1f - (float)num4 / 8f);
+			float f = (num3 + (float)i * 45f) * ((float)Math.PI / 180f);
+			((Graphic)_loadSpin[i]).rectTransform.anchoredPosition = new Vector2(-100f + Mathf.Cos(f) * 14f, Mathf.Sin(f) * 14f);
+			float a = 0.12f + 0.88f * (1f - (float)i / (float)_loadSpin.Length);
 			((Graphic)_loadSpin[i]).color = new Color(ColAccent.r, ColAccent.g, ColAccent.b, a);
 		}
 	}
