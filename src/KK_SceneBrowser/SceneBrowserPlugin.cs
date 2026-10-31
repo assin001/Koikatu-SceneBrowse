@@ -21,7 +21,7 @@ using UnityEngine.UI;
 
 namespace KK_SceneBrowser;
 
-[BepInPlugin("kk.scene.browser", "KK Scene Browser", "1.0.0")]
+[BepInPlugin("kk.scene.browser", "KK Scene Browser", "1.2.0")]
 [BepInProcess("CharaStudio.exe")]
 [DefaultExecutionOrder(10000)]
 public class SceneBrowserPlugin : BaseUnityPlugin
@@ -143,7 +143,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	public const string Name = "KK Scene Browser";
 
-	public const string Version = "1.0.0";
+	public const string Version = "1.2.0";
 
 	internal const string XUnityIgnore = "\u180e";
 
@@ -166,6 +166,8 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 	private ConfigEntry<bool> _hideNativeCfg;
 
 	private ConfigEntry<bool> _saveToAuthor;
+
+	private ConfigEntry<bool> _ovConfirmCfg;
 
 	private static Component _panel;
 
@@ -222,6 +224,14 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 	private Text _statusLabel;
 
 	private GameObject _confirmGo;
+
+	private Button _ovConfirmBtn;
+
+	private GameObject _ovCanvasGo;
+
+	private RectTransform _ovCanvasRect;
+
+	private GameObject _ovConfirmGo;
 
 	private readonly List<Canvas> _hiddenCanvases = new List<Canvas>();
 
@@ -718,6 +728,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			_hideBfCfg = ((BaseUnityPlugin)this).Config.Bind<bool>("UI", "Hide BrowserFolders bottom menu", true, "打开本面板时临时隐藏 BrowserFolders 的底部按钮条，关闭后恢复");
 			_hideNativeCfg = ((BaseUnityPlugin)this).Config.Bind<bool>("UI", "Hide native scene panel", true, "打开本面板时隐藏原生场景卡面板的绘制（原生对象仍激活，读取/导入流程不变）");
 			_saveToAuthor = ((BaseUnityPlugin)this).Config.Bind<bool>("Save", "Save scene to current author folder", true, "保存场景卡时存进「最后读取那张卡所在的作者目录」，而不是 scene 根目录。关闭则回到原生行为（一律存 scene 根）");
+			_ovConfirmCfg = ((BaseUnityPlugin)this).Config.Bind<bool>("Save", "Confirm before overwrite", true, "点「覆盖数据」时先弹出二次确认。可以在确认窗里用开关直接关掉（会写回本配置），也可以在这里手动改回");
 		}
 		catch (Exception ex)
 		{
@@ -1372,6 +1383,10 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 				PatchXUnity();
 			}
 			TryBuildOverwriteButton();
+			if ((Object)(object)_ovConfirmGo != (Object)null && Input.GetKeyDown((KeyCode)27))
+			{
+				CloseOverwriteConfirm();
+			}
 			if ((Object)(object)_panel == (Object)null || (Object)(object)((Component)_panel).gameObject == (Object)null)
 			{
 				HideRoot();
@@ -1386,6 +1401,10 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 				}
 				HideRoot();
 				HideNativeVisuals();
+				if (!_uiBuilt)
+				{
+					EnsureUi();
+				}
 				return;
 			}
 			_wasVisible = true;
@@ -2527,6 +2546,22 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 
 	private void OnClickOverwrite()
 	{
+		Log.LogInfo((object)("overwrite: click, last=" + (_lastScenePath ?? "null") + ", confirm=" + ((_ovConfirmCfg == null) ? "null" : _ovConfirmCfg.Value.ToString())));
+		if (string.IsNullOrEmpty(_lastScenePath) || !File.Exists(_lastScenePath))
+		{
+			Log.LogWarning((object)"overwrite: no last scene card, ignored");
+			return;
+		}
+		if (_ovConfirmCfg == null || !_ovConfirmCfg.Value)
+		{
+			DoOverwrite();
+			return;
+		}
+		ShowOverwriteConfirm();
+	}
+
+	private void DoOverwrite()
+	{
 		try
 		{
 			if (string.IsNullOrEmpty(_lastScenePath) || !File.Exists(_lastScenePath))
@@ -2651,6 +2686,100 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 			_overwritePath = null;
 			Log.LogError((object)("overwrite failed: " + ex11));
 		}
+	}
+
+	/// <summary>独立的高层 Overlay Canvas，避免确认窗被游戏自带 UI 遮挡，也不依赖主面板是否已构建。</summary>
+	private RectTransform EnsureOverlayCanvas()
+	{
+		if ((Object)(object)_ovCanvasGo == (Object)null)
+		{
+			_ovCanvasGo = new GameObject("KK_SceneBrowser_Overlay");
+			Object.DontDestroyOnLoad((Object)(object)_ovCanvasGo);
+			Canvas val = _ovCanvasGo.AddComponent<Canvas>();
+			val.renderMode = (RenderMode)0;
+			val.sortingOrder = 32000;
+			CanvasScaler val2 = _ovCanvasGo.AddComponent<CanvasScaler>();
+			val2.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+			val2.referenceResolution = new Vector2(1920f, 1080f);
+			val2.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+			val2.matchWidthOrHeight = 0.5f;
+			_ovCanvasGo.AddComponent<GraphicRaycaster>();
+			_ovCanvasRect = _ovCanvasGo.GetComponent<RectTransform>();
+			Log.LogInfo((object)"overlay canvas created");
+		}
+		return _ovCanvasRect;
+	}
+
+	/// <summary>覆盖保存前的二次确认窗，窗内带「覆盖前二次确认」开关（写入配置，立即生效）。</summary>
+	private void ShowOverwriteConfirm()
+	{
+		CloseOverwriteConfirm();
+		RectTransform ovCanvas = EnsureOverlayCanvas();
+		if ((Object)(object)ovCanvas == (Object)null)
+		{
+			Log.LogError((object)"overwrite confirm: overlay canvas missing");
+			DoOverwrite();
+			return;
+		}
+		Log.LogInfo((object)("overwrite confirm: show (" + Path.GetFileName(_lastScenePath) + ")"));
+		RectTransform val = NewRect("OverwriteConfirm", (Transform)(object)ovCanvas, 0f, 0f, 0f, 0f, new Color(0f, 0f, 0f, 0.55f), raycast: true);
+		val.anchorMin = Vector2.zero;
+		val.anchorMax = Vector2.one;
+		val.pivot = new Vector2(0.5f, 0.5f);
+		val.sizeDelta = Vector2.zero;
+		val.anchoredPosition = Vector2.zero;
+		((Transform)val).SetAsLastSibling();
+		_ovConfirmGo = ((Component)val).gameObject;
+		Button val2 = ((Component)val).gameObject.AddComponent<Button>();
+		((Selectable)val2).transition = (Selectable.Transition)0;
+		((UnityEvent)val2.onClick).AddListener(new UnityAction(CloseOverwriteConfirm));
+		RectTransform val3 = NewRound("Card", (Transform)(object)val, 500f, 240f, 0f, 0f, UiTheme.SurfaceAlt, RCard, true);
+		NewLabel((Transform)(object)val3, "确定覆盖保存？", 440f, 26f, 0f, 86f, 17, ColText, (TextAnchor)4);
+		NewLabel((Transform)(object)val3, Clip(Path.GetFileName(_lastScenePath), 40), 440f, 20f, 0f, 58f, 12, ColSub, (TextAnchor)4);
+		NewLabel((Transform)(object)val3, "原卡文件会被直接替换，且无法从本插件恢复", 440f, 20f, 0f, 32f, 12, ColDim, (TextAnchor)4);
+		NewButton((Transform)(object)val3, "取消", 120f, 40f, -72f, -58f, new UnityAction(CloseOverwriteConfirm));
+		Button val4 = NewButton((Transform)(object)val3, "覆盖保存", 140f, 40f, 72f, -58f, (UnityAction)delegate
+		{
+			CloseOverwriteConfirm();
+			DoOverwrite();
+		});
+		((Object)val4).name = "Btn_OverwriteConfirmYes";
+		PaintButton(val4, ColDanger, Color.white);
+	}
+
+	private void CloseOverwriteConfirm()
+	{
+		if ((Object)(object)_ovConfirmGo != (Object)null)
+		{
+			Object.Destroy((Object)(object)_ovConfirmGo);
+			_ovConfirmGo = null;
+		}
+	}
+
+	private void ToggleOverwriteConfirm(Button btn)
+	{
+		if (_ovConfirmCfg != null)
+		{
+			_ovConfirmCfg.Value = !_ovConfirmCfg.Value;
+		}
+		PaintOverwriteConfirmToggle(btn, (Object)(object)btn != (Object)(object)_ovConfirmBtn);
+		PaintOverwriteConfirmToggle(_ovConfirmBtn, true);
+	}
+
+	private void PaintOverwriteConfirmToggle(Button btn, bool compact)
+	{
+		if ((Object)(object)btn == (Object)null)
+		{
+			return;
+		}
+		bool flag = _ovConfirmCfg == null || _ovConfirmCfg.Value;
+		Text val = ButtonLabel(btn);
+		if ((Object)(object)val != (Object)null)
+		{
+			val.fontSize = (compact ? 11 : 12);
+			val.text = (flag ? (compact ? "覆盖确认：开" : "覆盖前二次确认：开") : (compact ? "覆盖确认：关" : "覆盖前二次确认：关"));
+		}
+		PaintButton(btn, flag ? ColAccent : ColField, flag ? Color.white : ColSub);
 	}
 
 	private IEnumerator EnsureNotificationClosed()
@@ -4195,7 +4324,7 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		NewRound("Shadow", (Transform)(object)_rootRect, PanelW + 22f, 996f, 0f, -8f, new Color(0f, 0f, 0f, 0.45f), RPanel + 6, false);
 		RectTransform val3 = NewCard("Panel", (Transform)(object)_rootRect, PanelW, 980f, 0f, 0f, ColPanel, RPanel, true);
 		float num = 490f;
-		Text val4 = NewLabel((Transform)(object)val3, "SD卡管理器 <size=13><color=#74869A>v1.1</color></size>", 300f, 32f, PanelLeft + 172f, num - 26f, 21, ColText, (TextAnchor)3);
+		Text val4 = NewLabel((Transform)(object)val3, "SD卡管理器 <size=13><color=#74869A>v1.2</color></size>", 300f, 32f, PanelLeft + 172f, num - 26f, 21, ColText, (TextAnchor)3);
 		((Object)val4).name = "Title";
 		_pathLabel = NewLabel((Transform)(object)val3, "", PanelW - 242f, 18f, PanelLeft + 22f + (PanelW - 242f) / 2f, num - 52f, 12, ColDim, (TextAnchor)3);
 		((Object)_pathLabel).name = "PathLabel";
@@ -4216,6 +4345,12 @@ public class SceneBrowserPlugin : BaseUnityPlugin
 		{
 			refreshLbl.fontSize = 11;
 		}
+		_ovConfirmBtn = NewButton((Transform)(object)val3, "", 96f, 26f, 546f, num - 24f, (UnityAction)delegate
+		{
+			ToggleOverwriteConfirm(_ovConfirmBtn);
+		});
+		((Object)_ovConfirmBtn).name = "Btn_OverwriteConfirmCfg";
+		PaintOverwriteConfirmToggle(_ovConfirmBtn, true);
 		NewRect("Sep1", (Transform)(object)val3, PanelW - 56f, 1f, 0f, 422f, ColLine, raycast: false);
 		NewCard("FilterBar", (Transform)(object)val3, GridRight - GridLeft, 96f, (GridLeft + GridRight) / 2f, 370f, ColSurface, RCard, false);
 		float num2 = num - 146f;
